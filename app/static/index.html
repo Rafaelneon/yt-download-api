@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>API - Download Manager</title>
+    <link rel="stylesheet" href="static/styles.css" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>API de Downloads do youtube</h1>
+            <p>Gerenciador de Downloads</p>
+        </header>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalDownloads">0</div>
+                <div class="stat-label">Total Downloads</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeDownloads">0</div>
+                <div class="stat-label">Ativos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedDownloads">0</div>
+                <div class="stat-label">Concluídos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="errorDownloads">0</div>
+                <div class="stat-label">Erros</div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('downloads')">Downloads</button>
+            <button class="tab" onclick="showTab('queue')">Fila</button>
+            <button class="tab" onclick="showTab('verify')">Verificador</button>
+            <button class="tab" onclick="showTab('Documentação')">Documentação</button>
+        </div>
+
+        <div id="downloads" class="tab-content active">
+            <h2>Adicionar Downloads</h2>
+            <div class="form-group">
+                <label>URLs para download:</label>
+                <div id="urlInputs">
+                    <div class="url-input-group">
+                        <input type="url" placeholder="https://..." class="url-input" />
+                        <select class="type-select">
+                            <option value="video">Vídeo</option>
+                            <option value="music">Música</option>
+                        </select>
+                        <button class="remove-url" onclick="removeUrlInput(this)" style="display:none;">×</button>
+                    </div>
+                </div>
+                <button class="add-more-urls" onclick="addUrlInput()">+ Adicionar mais URLs</button>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn" onclick="addDownloads()">
+                    <span id="addBtnText">Adicionar Downloads</span>
+                    <span id="addBtnLoading" style="display:none;"><span class="loading"></span></span>
+                </button>
+                <button class="btn btn-secondary" onclick="clearInputs()">Limpar</button>
+            </div>
+
+            
+
+        </div>
+
+        <div id="queue" class="tab-content">
+            <h2>Fila de Downloads</h2>
+            <label>Lista downloads feitos:</label>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="loadQueue()">
+                    <span id="refreshBtnText">Atualizar</span>
+                    <span id="refreshBtnLoading" style="display:none;"><span class="loading"></span></span>
+                </button>
+            </div>
+            <div id="queueList"></div>
+        </div>
+
+        <div id="verify" class="tab-content">
+            <h2>Verificador Downloads</h2>
+            <div class="form-group">
+                <label>Verificar Status de URL:</label>
+                <div class="status-check">
+                    <input type="url" id="status-url" placeholder="https://..." />
+                    <button class="btn btn-secondary" onclick="checkStatus()">Verificar</button>
+                </div>
+                <pre id="status-result"></pre>
+            </div>
+        </div>
+
+        <div id="Documentação" class="tab-content">
+            <h2>📚 Documentação da API</h2>
+            <p>-</p>
+            <p>
+                Esta é uma API gratuita desenvolvida para automatizar o processo de download de vídeos e músicas
+                do YouTube. Ela utiliza a biblioteca <code>pytubefix</code>, garantindo simplicidade e boa 
+                compatibilidade com a plataforma.
+            </p>
+
+            <p>
+                Você é livre para utilizar, modificar e expandir esta API da forma que desejar.  
+                Caso queira adicionar novos recursos ou melhorar o desempenho, fique totalmente à vontade.
+            </p>
+            <p>-</p>
+
+            <!-- Enviar Download -->
+            <div class="form-group">
+                <h2>📤 Enviar Download</h2>
+                <p>-</p>
+                <p><strong>Endpoint:</strong> <code>POST /youtube/download</code></p>
+
+                <pre><code>// Exemplo de uso
+        const url = "https://www.youtube.com/watch?v=EXEMPLO";
+        const type = "video"; // ou "music"
+
+        fetch(`/youtube/download?url=${encodeURIComponent(url)}&type_=${type}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => console.log("Download adicionado:", data));
+        </code></pre>
+            </div>
+
+            <!-- Listar fila -->
+            <div class="form-group">
+                <h3>📋 Listar Fila</h3>
+                <p><strong>Endpoint:</strong> <code>GET /youtube/queue</code></p>
+
+                <pre><code>// Exemplo de uso
+        fetch('/youtube/queue')
+            .then(res => res.json())
+            .then(data => {
+                console.log("Fila atual:", data);
+                // Retorno: [{url, type_, status, result}, ...]
+            });
+        </code></pre>
+            </div>
+
+            <!-- Verificar Status -->
+            <div class="form-group">
+                <h3>🔍 Verificar Status</h3>
+                <p><strong>Endpoint:</strong> <code>GET /youtube/status?url={URL}</code></p>
+
+                <pre><code>// Exemplo de uso
+        const url = "https://www.youtube.com/watch?v=EXEMPLO";
+
+        fetch(`/youtube/status?url=${encodeURIComponent(url)}`)
+            .then(res => {
+                if (res.status === 404) {
+                    console.log("URL não encontrada na fila");
+                    return;
+                }
+                return res.json();
+            })
+            .then(data => console.log("Status:", data));
+        </code></pre>
+            </div>
+
+            <!-- Exemplo completo -->
+            <div class="form-group">
+                <h3>📦 Exemplo Completo</h3>
+
+                <pre><code>// Função completa para adicionar e monitorar
+        async function baixarVideo(url, tipo) {
+            try {
+                // Adicionar à fila
+                const add = await fetch(`/youtube/download?url=${encodeURIComponent(url)}&type_=${tipo}`, {
+                    method: 'POST'
+                });
+                const result = await add.json();
+                console.log("✅ Adicionado:", result.message);
+
+                // Verificar status
+                const status = await fetch(`/youtube/status?url=${encodeURIComponent(url)}`);
+                const statusData = await status.json();
+                console.log("📊 Status:", statusData.status);
+
+                // Listar fila
+                const queue = await fetch('/youtube/queue');
+                const queueData = await queue.json();
+                console.log("📋 Fila:", queueData.length, "itens");
+
+            } catch (erro) {
+                console.error("❌ Erro:", erro);
+            }
+        }
+        </code></pre>
+            </div>
+
+            <!-- Resposta padrão -->
+            <div class="form-group">
+                <h3>🔧 Resposta da API</h3>
+                <p><strong>Formato padrão de resposta:</strong></p>
+
+                <pre><code>{
+            "message": "Download adicionado à fila",
+            "url": "https://www.youtube.com/watch?v=...",
+            "type": "video"
+        }
+        </code></pre>
+            </div>
+
+            <!-- Status possíveis -->
+            <div class="form-group">
+                <h3>📡 Status Possíveis</h3>
+
+                <ul>
+                    <li><code>pending</code> — Aguardando início</li>
+                    <li><code>in_progress</code> — Baixando</li>
+                    <li><code>completed</code> — Concluído</li>
+                    <li><code>failed</code> — Falhou</li>
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
